@@ -100,7 +100,7 @@
 
         {{#if (gte zoom 8)}}
             {{#each packets as |p|}}
-                {{#marker-layer lat=p.latitude lng=p.longitude draggable=false}}
+                {{#marker-layer lat=p.latitude lng=p.longitude draggable=false icon=p.icon}}
                   {{#popup-layer}}
                     <h3>{{p.from}}</h3>
                     <p>

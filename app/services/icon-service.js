@@ -3,12 +3,32 @@ import Ember from 'ember';
 export default Ember.Service.extend({
 
     get_icon: function(symbol_table, symbol) {
+        let icon = {
+            iconSize: [24, 24],
+            iconAnchor: [24, 24],
+            popupAnchor: [-30, -30]
+        };
+
         if(symbol_table == '/') {
-            return {directory: '0', icon: primary[symbol]};
+            if(this.primary.hasOwnProperty(symbol)) {
+                let icon_symbol = this.primary[symbol];
+                icon.iconUrl = `/assets/images/0/${icon_symbol.index}.png`;
+                icon.name = icon_symbol.name;
+                return icon;
+            }
         } else if(symbol_table == '\\') {
-            return {directory: '1', icon: alternative[symbol]};
+            if(this.alternative.hasOwnProperty(symbol)) {
+                let icon_symbol = this.alternative[symbol];
+                icon.iconUrl = `/assets/images/1/${icon_symbol.index}.png`;
+                icon.name = icon_symbol.name;
+                return icon;
+            }
         }
-    }
+
+        icon.iconUrl = `/assets/images/1/1.png`;
+        icon.name = 'No symbol';
+        return icon;
+    },
 
     primary: {
         '!': {'index': 0, 'name': 'Police Stn'},
@@ -114,7 +134,7 @@ export default Ember.Service.extend({
         '$': {'index': 3,  'name': 'Bank'},
         '%': {'index': 4,  'name': 'No Symbol'},
         '&': {'index': 5,  'name': 'No. Diam'},
-        "'", {'index': 6,  'name': 'Crash site'},
+        "'": {'index': 6,  'name': 'Crash site'},
         '(': {'index': 7,  'name': 'Cloudy'},
         ')': {'index': 8,  'name': 'MEO'},
         '*': {'index': 9,  'name': 'Snow'},

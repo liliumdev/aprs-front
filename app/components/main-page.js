@@ -6,6 +6,7 @@ export default Ember.Component.extend({
     trackerService: Ember.inject.service(),
     zoneService: Ember.inject.service(),
     packetService: Ember.inject.service(),
+    iconService: Ember.inject.service(),
 
     map: null,
 
@@ -76,7 +77,7 @@ export default Ember.Component.extend({
             ]
         };
         mapped[spec_property_map] = obj[spec_property];
-        
+
         return mapped;
     },
 
@@ -117,7 +118,7 @@ export default Ember.Component.extend({
     packets: [],
     last_refresh_at: 0,
     update_position_override: false,
-    auto_packet_update: 10000,    
+    auto_packet_update: 10000,
 
     update_positions() {
         let self = this;
@@ -146,7 +147,7 @@ export default Ember.Component.extend({
                     'lat_to': boundary.lat_to,
                     'long_from': boundary.lng_from,
                     'long_to': boundary.lng_to
-                };  
+                };
 
                 if(this.get('filtering_by_callsign')) {
                     request.filter = 'callsign';
@@ -156,12 +157,15 @@ export default Ember.Component.extend({
                 }
 
                 console.log('Getting new positions ...');
-                //this.set('packets', this.get('packetService').positions(request));                
                 this.get('packetService').get_positions(request).then(function(data) {
                     let packets = self.get('packets');
                     data.forEach(function(packet) {
                         if(packets.findBy('hash', packet.hash) === undefined) {
-                            packets.addObject(Packet.create(packet));
+                            let new_packet = Packet.create(packet);
+                            new_packet.icon = L.icon(self.get('iconService').get_icon(new_packet.symbol_table, new_packet.symbol));
+                            console.log('iconnnnnn');
+                            console.log(new_packet.icon);
+                            packets.addObject(new_packet);
                         }
                     });
                 });
@@ -240,7 +244,7 @@ export default Ember.Component.extend({
         },
 
         stop_filtering_by_callsign() {
-            this.set('filtering_by_callsign', false);            
+            this.set('filtering_by_callsign', false);
             this.set('update_position_override', true);
             this.update_positions();
         },
