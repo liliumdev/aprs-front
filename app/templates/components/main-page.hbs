@@ -1,0 +1,159 @@
+<div class="ui left visible sidebar">  
+    <h1>aprs-tracker</h1>
+
+    <div class="ui card">
+        <div class="content">
+            <div class="meta">
+                <span class="date">Show packets from last</span>
+            </div>
+          </div>
+          <div class="extra content center aligned">
+                {{#ui-dropdown class="selection" selected="1 hour" onChange=(action (mut show_from_last))}}
+                    <div class="default text">1 hour</div>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                      {{#each show_from_last_options as |option|}}
+                        <div class="item" data-value="{{option}}">
+                          {{option}}
+                        </div>
+                      {{/each}}
+                    </div>
+                {{/ui-dropdown}}
+          </div>
+    </div>
+
+    <div class="ui card">
+        <div class="content">
+            <div class="meta">
+                <span class="date">Track by callsign</span>
+            </div>
+          </div>
+          <div class="extra content center aligned">
+            {{#if filtering_by_callsign}}
+                <p>Currently tracking <b>{{filter_callsign}}</b></p>
+                {{ui-checkbox class="toggle" label="Show trail" checked=show_trail onChange=(action (mut show_trail))}}
+                <br><br>
+                <button class="ui negative button" {{action 'stop_filtering_by_callsign'}}>Stop tracking</button>
+            {{else}}
+                <div class="ui action input">
+                  {{input type="text" placeholder="Enter callsign..." value=filter_callsign}}
+                  <button class="ui icon button" {{action 'filter_by_callsign'}}>
+                    <i class="search icon"></i>
+                  </button>
+                </div>
+            {{/if}}
+          </div>
+    </div>
+
+    <div class="ui card">
+        <div class="content">
+            <div class="meta">
+                <span class="date">Get last seen location</span>
+            </div>
+          </div>
+          <div class="extra content center aligned">
+            {{#if (eq last_seen.status 'bad')}}
+                <p><b>Could not locate this callsign.</b></p>
+            {{/if}}
+            {{#if (eq last_seen.status 'ok')}}
+                <p><b>Last seen at {{last_seen.seen}}</b></p>
+            {{/if}}
+            <div class="ui action input">
+              {{input type="text" placeholder="Enter callsign..." value=last_seen_callsign}}
+              <button class="ui icon button" {{action 'get_last_seen'}}>
+                    <i class="marker icon"></i>
+              </button>
+            </div>
+          </div>
+    </div>
+
+    <div class="ui card">
+        <div class="content">
+            <div class="meta">
+                <span class="date">Tracker area</span>
+            </div>
+          </div>
+          <div class="extra content center aligned">
+                <div class="ui buttons">
+                  <button class="ui {{if show_trackers '' 'positive'}} button" {{action 'toggle_show_trackers'}}>Hide</button>
+                  <div class="or"></div>
+                  <button class="ui {{if show_trackers 'positive' ''}} button" {{action 'toggle_show_trackers'}}>Show</button>
+                </div>
+          </div>
+    </div>
+</div>
+
+<div class="pusher">
+	{{#leaflet-map lat=lat lng=lng zoom=zoom onMoveend=(action "update_center") onZoomend=(action "update_zoom") onLoad=(action "initMap")}}
+        
+        {{tile-layer url="http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"}}
+
+        {{#if show_trackers}}
+            {{#each tracker_zones as |tracker_zone|}}
+                {{#polygon-layer locations=tracker_zone.rect color="blue"}}
+                    {{#tooltip-layer sticky=true}}
+                      {{tracker_zone.name}}
+                    {{/tooltip-layer}}
+                  {{/polygon-layer}}
+            {{/each}}
+        {{/if}}
+
+        {{#if (gte zoom 8)}}
+            {{#each packets as |p|}}
+                {{#marker-layer lat=p.latitude lng=p.longitude draggable=false}}
+                  {{#popup-layer}}
+                    <h3>{{p.from}}</h3>
+                    <p>
+                    {{#each-in p as |key value|}}
+                        {{#if (or (not-eq key 'from') (not-eq key 'raw'))}}
+                            <b>{{key}}:</b> {{value}}<br>
+                        {{/if}}
+                    {{/each-in}}
+                    </p>
+                  {{/popup-layer}}
+                {{/marker-layer}}
+            {{/each}}
+
+                
+            {{#if show_trail}}
+                {{log trail}}
+                {{#polyline-layer locations=trail}}
+                {{/polyline-layer}}
+            {{/if}}
+        {{/if}}
+
+        {{#if (and (lte zoom 4) (gt zone_z4_max 0))}}
+            {{#each zone_z4_clusters as |zone_cluster|}}
+                {{#polygon-layer locations=zone_cluster.rect color="red" stroke=false fillOpacity=(mult (div zone_cluster.zone_count zone_z4_max) 0.8)}}
+                    {{#tooltip-layer sticky=true}}
+                      {{zone_cluster.zone_count}}
+                    {{/tooltip-layer}}
+                  {{/polygon-layer}}
+            {{/each}}
+        {{/if}}
+
+        {{#if (and (and (gt zoom 4) (lt zoom 8)) (gt zone_z7_max 0))}}
+            {{#each zone_z7_clusters as |zone_cluster|}}
+                {{#polygon-layer locations=zone_cluster.rect color="red" stroke=false fillOpacity=(mult (div zone_cluster.zone_count zone_z7_max) 0.8)}}
+                    {{#tooltip-layer sticky=true}}
+                      {{zone_cluster.zone_count}}
+                    {{/tooltip-layer}}
+                  {{/polygon-layer}}
+            {{/each}}
+        {{/if}}
+	{{/leaflet-map}}
+
+</div>
+
+<div class="ui right visible sidebar">  
+    <div class="tech-log">
+        <p><b><u>TECH LOG</u></b><br>
+        <b>Lat:</b> {{lat}}<br>
+        <b>Lng:</b> {{lng}}<br>
+        <b>Zoom:</b> {{zoom}}<br>
+        <b>Boundary:</b><br>N {{boundary.lat_from}}<br> W {{boundary.lng_from}}<br> S {{boundary.lat_to}}<br> E {{boundary.lng_to}}<br>
+        <b>Last update:</b> {{moment last_update}}<br>
+        <b>Trackers active:</b> {{trackers.length}}
+        </p>
+    </div>
+</div>

@@ -1,0 +1,21 @@
+.ui.left.visible.sidebar {
+	background-color: #1B1C1D;
+	color: #fff;
+	padding: 15px;
+}
+
+.ui.left.visible.sidebar .ui.action.input > input {
+    width: 80%;
+}
+
+.leaflet-container {
+    height: 100vh;
+}
+
+.ui.right.visible.sidebar {
+    background-color: #fff;
+    color: #000;
+    opacity: 0.55;
+    font-family: 'Courier';
+    padding: 15px;
+}
