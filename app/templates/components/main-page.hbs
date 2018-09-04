@@ -98,8 +98,8 @@
             {{/each}}
         {{/if}}
 
-        {{#if (gte zoom 8)}}
-            {{#each packets as |p|}}
+            {{#each packets_with_icons as |p index|}}
+              {{#if (gte zoom 8)}}
                 {{#marker-layer lat=p.latitude lng=p.longitude draggable=false icon=p.icon}}
                   {{#popup-layer}}
                     <h3>{{p.from}}</h3>
@@ -112,6 +112,7 @@
                     </p>
                   {{/popup-layer}}
                 {{/marker-layer}}
+              {{/if}}
             {{/each}}
 
                 
@@ -120,7 +121,6 @@
                 {{#polyline-layer locations=trail}}
                 {{/polyline-layer}}
             {{/if}}
-        {{/if}}
 
         {{#if (and (lte zoom 4) (gt zone_z4_max 0))}}
             {{#each zone_z4_clusters as |zone_cluster|}}

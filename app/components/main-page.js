@@ -1,6 +1,7 @@
 import Ember from 'ember';
 import moment from 'moment';
 import Packet from '../models/packet';
+import _ from 'lodash';
 
 export default Ember.Component.extend({
     trackerService: Ember.inject.service(),
@@ -57,9 +58,9 @@ export default Ember.Component.extend({
     filter_callsign: '',
     filtering_by_callsign: false,   
     show_trail: false,
-    show_trail_changed: Ember.observer('show_trail', function() {
-        if(this.get('show_trail')) {
-            this.set('trail', this.get('packets').sortBy('created_at').map((p) => { return {lat: p.latitude, lng: p.longitude} }));
+    show_trail_changed: Ember.observer('show_trail', 'packets.[]', function() {
+        if(this.get('show_trail')) {      
+            this.set('trail', this.get('packets').sortBy('created_at').filter((p) => p.from === this.get('filter_callsign')).map((p) => { return {lat: p.latitude, lng: p.longitude} }));
         } else {
             this.set('trail', []);
         }
@@ -112,13 +113,20 @@ export default Ember.Component.extend({
     zone_z4_counts: Ember.computed.mapBy('zone_z4_clusters', 'zone_count'),
     zone_z7_counts: Ember.computed.mapBy('zone_z7_clusters', 'zone_count'),
 
-    zone_z4_max: Ember.computed.max('zone_z4_counts'),
+    zone_z4_max: Ember.computed.max('zone_z4_counts'), 
     zone_z7_max: Ember.computed.max('zone_z7_counts'),
 
     packets: [],
+    packets_with_icons: Ember.computed('packets.[]', function() {
+        let packets = this.get('packets');
+        let packets_with_icons = _.orderBy(packets, ['created_at'], ['desc']);
+        packets_with_icons = packets_with_icons.uniqBy('from');
+
+        return packets_with_icons;
+    }),
     last_refresh_at: 0,
     update_position_override: false,
-    auto_packet_update: 10000,
+    auto_packet_update: 5000,
 
     update_positions() {
         let self = this;
@@ -156,15 +164,17 @@ export default Ember.Component.extend({
                     request.filter = 'no';
                 }
 
-                console.log('Getting new positions ...');
                 this.get('packetService').get_positions(request).then(function(data) {
                     let packets = self.get('packets');
                     data.forEach(function(packet) {
                         if(packets.findBy('hash', packet.hash) === undefined) {
                             let new_packet = Packet.create(packet);
+
+                            //if(!self.get('show_trail')) {
+                            //    packets.removeObjects(packets.filter(p => p.from === new_packet.from));
+                            //}
+
                             new_packet.icon = L.icon(self.get('iconService').get_icon(new_packet.symbol_table, new_packet.symbol));
-                            console.log('iconnnnnn');
-                            console.log(new_packet.icon);
                             packets.addObject(new_packet);
                         }
                     });
@@ -202,10 +212,7 @@ export default Ember.Component.extend({
         let zoom = this.get('zoom');
         let last_minutes = this.get('show_from_last_minutes');
 
-        console.log(`Updating Z4 with last_minute=${last_minutes}...`);
         this.set('zones_z4', this.get('zoneService').all(4, last_minutes));
-
-        console.log(`Updating Z7 with last_minute=${last_minutes}...`);
         this.set('zones_z7', this.get('zoneService').all(7, last_minutes));
 
     },
@@ -245,7 +252,9 @@ export default Ember.Component.extend({
 
         stop_filtering_by_callsign() {
             this.set('filtering_by_callsign', false);
+            this.set('show_trail', false);
             this.set('update_position_override', true);
+            this.set('packets', []);
             this.update_positions();
         },
 

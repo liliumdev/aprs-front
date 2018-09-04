@@ -30,7 +30,7 @@ module.exports = function(environment) {
     // ENV.APP.LOG_TRANSITIONS = true;
     // ENV.APP.LOG_TRANSITIONS_INTERNAL = true;
     // ENV.APP.LOG_VIEW_LOOKUPS = true;
-    ENV.apiHost = "http://aprs.dev";
+    ENV.apiHost = "http://aprs";
   }
 
   if (environment === 'test') {
@@ -42,7 +42,7 @@ module.exports = function(environment) {
     ENV.APP.LOG_VIEW_LOOKUPS = false;
 
     ENV.APP.rootElement = '#ember-testing';
-    ENV.apiHost = "http://aprs.dev";
+    ENV.apiHost = "http://aprs";
   }
 
   if (environment === 'production') {
