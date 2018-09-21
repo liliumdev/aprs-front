@@ -99,25 +99,14 @@
         {{/if}}
 
             {{#each packets_with_icons as |p index|}}
-              {{#if (gte zoom 8)}}
-                {{#marker-layer lat=p.latitude lng=p.longitude draggable=false icon=p.icon}}
-                  {{#popup-layer}}
-                    <h3>{{p.from}}</h3>
-                    <p>
-                    {{#each-in p as |key value|}}
-                        {{#if (or (not-eq key 'from') (not-eq key 'raw'))}}
-                            <b>{{key}}:</b> {{value}}<br>
-                        {{/if}}
-                    {{/each-in}}
-                    </p>
-                  {{/popup-layer}}
+              {{#if (gte zoom 7)}}
+                {{#marker-layer lat=p.latitude lng=p.longitude draggable=false icon=p.icon onClick=(action "click_marker" p)}}
                 {{/marker-layer}}
               {{/if}}
             {{/each}}
 
                 
             {{#if show_trail}}
-                {{log trail}}
                 {{#polyline-layer locations=trail}}
                 {{/polyline-layer}}
             {{/if}}
@@ -132,7 +121,7 @@
             {{/each}}
         {{/if}}
 
-        {{#if (and (and (gt zoom 4) (lt zoom 8)) (gt zone_z7_max 0))}}
+        {{#if (and (and (gt zoom 4) (lt zoom 7)) (gt zone_z7_max 0))}}
             {{#each zone_z7_clusters as |zone_cluster|}}
                 {{#polygon-layer locations=zone_cluster.rect color="red" stroke=false fillOpacity=(mult (div zone_cluster.zone_count zone_z7_max) 0.8)}}
                     {{#tooltip-layer sticky=true}}
@@ -147,6 +136,17 @@
 
 <div class="ui right visible sidebar">  
     <div class="tech-log">
+        {{#if selected_packet}}        
+          <p><b><u>Reported by: {{selected_packet.from}}</u></b></p>
+          <p>
+          {{#each-in selected_packet as |key value|}}
+              {{#if (or (not-eq key 'from') (not-eq key 'raw'))}}
+                  <b>{{key}}:</b> {{value}}<br>
+              {{/if}}
+          {{/each-in}}
+        </p>
+        {{/if}}
+
         <p><b><u>TECH LOG</u></b><br>
         <b>Lat:</b> {{lat}}<br>
         <b>Lng:</b> {{lng}}<br>

@@ -2,13 +2,21 @@ import Ember from 'ember';
 
 export default Ember.Service.extend({
 
-    get_icon: function(symbol_table, symbol) {
+    get_icon: function(symbol_table, symbol, zoom) {    
+        let iconSize = [24, 24];
+
         let icon = {
-            iconSize: [24, 24],
-            iconAnchor: [24, 24],
-            popupAnchor: [-30, -30]
+            iconSize: iconSize,
+            iconAnchor: iconSize,
         };
 
+        let symbolDec = symbol.charCodeAt(0);
+        let symbolTableDec = symbol_table.charCodeAt(0);
+        icon.iconUrl = `/assets/images/symbol-${symbolDec}-${symbolTableDec}-scale${iconSize[0]}x${iconSize[1]}.png`;
+
+        return icon;
+
+/*
         if(symbol_table == '/') {
             if(this.primary.hasOwnProperty(symbol)) {
                 let icon_symbol = this.primary[symbol];
@@ -27,7 +35,7 @@ export default Ember.Service.extend({
 
         icon.iconUrl = `/assets/images/1/1.png`;
         icon.name = 'No symbol';
-        return icon;
+        return icon; */
     },
 
     primary: {

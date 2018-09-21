@@ -4,9 +4,12 @@ import Packet from '../models/packet';
 import _ from 'lodash';
 
 export default Ember.Component.extend({
+    // API services
     trackerService: Ember.inject.service(),
     zoneService: Ember.inject.service(),
     packetService: Ember.inject.service(),
+
+    // Icon service
     iconService: Ember.inject.service(),
 
     map: null,
@@ -116,11 +119,15 @@ export default Ember.Component.extend({
     zone_z4_max: Ember.computed.max('zone_z4_counts'), 
     zone_z7_max: Ember.computed.max('zone_z7_counts'),
 
+    // Current shown on-screen data
+    selected_packet: null,
     packets: [],
     packets_with_icons: Ember.computed('packets.[]', function() {
         let packets = this.get('packets');
         let packets_with_icons = _.orderBy(packets, ['created_at'], ['desc']);
-        packets_with_icons = packets_with_icons.uniqBy('from');
+        packets_with_icons = _.uniqBy(packets_with_icons, function(p) {
+            return p.from + '_' + p.object_name;
+        });
 
         return packets_with_icons;
     }),
@@ -141,7 +148,7 @@ export default Ember.Component.extend({
                 override = true;
         }
 
-        if(this.get('zoom') > 7) {
+        if(this.get('zoom') > 6) {
             let boundary = this.get('boundary');
 
             if(!this.is_boundary_inside_old_boundary(boundary) || this.is_old_boundary_empty(boundary) || override) {
@@ -166,6 +173,7 @@ export default Ember.Component.extend({
 
                 this.get('packetService').get_positions(request).then(function(data) {
                     let packets = self.get('packets');
+                    
                     data.forEach(function(packet) {
                         if(packets.findBy('hash', packet.hash) === undefined) {
                             let new_packet = Packet.create(packet);
@@ -174,7 +182,7 @@ export default Ember.Component.extend({
                             //    packets.removeObjects(packets.filter(p => p.from === new_packet.from));
                             //}
 
-                            new_packet.icon = L.icon(self.get('iconService').get_icon(new_packet.symbol_table, new_packet.symbol));
+                            new_packet.icon = L.icon(self.get('iconService').get_icon(new_packet.symbol_table, new_packet.symbol, self.get('zoom')));
                             packets.addObject(new_packet);
                         }
                     });
@@ -243,6 +251,10 @@ export default Ember.Component.extend({
     },
 
     actions: {
+        click_marker(packet) {
+            this.set('selected_packet', packet);
+        },
+
         filter_by_callsign() {
             this.set('filtering_by_callsign', true);
             this.set('packets', []);

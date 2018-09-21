@@ -46,7 +46,7 @@ module.exports = function(environment) {
   }
 
   if (environment === 'production') {
-    ENV.apiHost = "http://217.197.138.182";
+    ENV.apiHost = "http://77.238.199.207";
   }
 
   return ENV;
