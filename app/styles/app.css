@@ -18,4 +18,19 @@
     opacity: 0.55;
     font-family: 'Courier';
     padding: 15px;
+    z-index: 9999;
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 15px;
+    left: 8px;
+    font-size: 33px;
+    color: #000;
+    cursor: pointer;
+    z-index: 9999;
+}
+
+.leaflet-control-container > .leaflet-top.leaflet-left {
+    top: 40px !important;
 }

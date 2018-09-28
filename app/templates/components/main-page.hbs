@@ -1,5 +1,5 @@
-<div class="ui left visible sidebar">  
-    <h1>aprs-tracker</h1>
+<div class="ui left sidebar {{if sidebar_visible 'visible' ''}}">  
+    <h1>minaprs</h1>
 
     <div class="ui card">
         <div class="content">
@@ -81,9 +81,21 @@
                 </div>
           </div>
     </div>
+
+    <div  style="position: absolute; bottom: 10px; width: 240px;">
+        <p style="color: white; font-size: 10px;">
+          <i>minaprs</i> has been developed as part of a bachelor's degree thesis at the Faculty of Electrical Engineering in Sarajevo.<br><br>
+
+          Academic year: 2017/18<br>
+          Mentor: prof. dr. Samim Konjicija<br>
+          Candidate: Ahmed Popović
+        </p>
+    </div>
 </div>
 
 <div class="pusher">
+  <div class="sidebar-toggle" {{action "toggle_sidebar"}}><i class="{{if sidebar_visible "times" "bars"}} icon"></i></div>
+
 	{{#leaflet-map lat=lat lng=lng zoom=zoom onMoveend=(action "update_center") onZoomend=(action "update_zoom") onLoad=(action "initMap")}}
         
         {{tile-layer url="http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"}}
@@ -107,8 +119,10 @@
 
                 
             {{#if show_trail}}
-                {{#polyline-layer locations=trail}}
+              {{#each trails as |trail index|}}
+                {{#polyline-layer locations=trail color=(get trail_colors (concat index ""))}}
                 {{/polyline-layer}}
+              {{/each}}
             {{/if}}
 
         {{#if (and (lte zoom 4) (gt zone_z4_max 0))}}
@@ -134,7 +148,7 @@
 
 </div>
 
-<div class="ui right visible sidebar">  
+<div class="ui right {{if sidebar_visible 'visible' ''}} sidebar">  
     <div class="tech-log">
         {{#if selected_packet}}        
           <p><b><u>Reported by: {{selected_packet.from}}</u></b></p>

@@ -4,6 +4,8 @@ import Packet from '../models/packet';
 import _ from 'lodash';
 
 export default Ember.Component.extend({
+    trail_colors: ['#F40000', '#000103', '#8E9AAF', '#4B5043', '#60B2E5', '#CD5334', '#84DD63', '#000103', '#1C77C3', '#D63AF9'],
+
     // API services
     trackerService: Ember.inject.service(),
     zoneService: Ember.inject.service(),
@@ -33,7 +35,7 @@ export default Ember.Component.extend({
     },
 
     // Filtering options
-    show_from_last_options: ['15 minutes', '30 minutes', '1 hour', '3 hours', '6 hours'],
+    show_from_last_options: ['15 minutes', '30 minutes', '1 hour', '3 hours', '6 hours', '12 hours', '1 day', '2 days', '7 days'],
     show_from_last: '1 hour',    
     show_from_last_minutes: 60,
     show_from_last_changed: Ember.observer('show_from_last', function() {
@@ -42,7 +44,11 @@ export default Ember.Component.extend({
             '30 minutes': 30, 
             '1 hour'    : 60, 
             '3 hours'   : 180, 
-            '6 hours'   : 360
+            '6 hours'   : 360,
+            '12 hours'  : 720,
+            '1 day'     : 1440,
+            '2 days'    : 2880,
+            '7 days'    : 10080
         };
 
         let new_minutes = options_to_minutes[this.get('show_from_last')];
@@ -61,14 +67,37 @@ export default Ember.Component.extend({
     filter_callsign: '',
     filtering_by_callsign: false,   
     show_trail: false,
-    show_trail_changed: Ember.observer('show_trail', 'packets.[]', function() {
+    show_trail_changed: Ember.observer('show_trail', 'packets.[]', 'zoom', function() {
+        this.set('trails', []);
+
         if(this.get('show_trail')) {      
-            this.set('trail', this.get('packets').sortBy('created_at').filter((p) => p.from === this.get('filter_callsign')).map((p) => { return {lat: p.latitude, lng: p.longitude} }));
-        } else {
-            this.set('trail', []);
+            let callsign_packets = this.get('packets')
+                .sortBy('created_at')
+                .filter((p) => p.from === this.get('filter_callsign'));
+
+            let current_trail = [];
+            for(let i = 0; i < callsign_packets.length; i++) {
+                let packet = callsign_packets[i];
+
+                if(i == 0) {
+                    current_trail.push(packet);
+                } else {
+                    let packet_time = moment(packet.created_at);
+                    let previous_packet_time = moment(callsign_packets[i - 1].created_at);
+
+                    let time_difference = packet_time.diff(previous_packet_time, 'minutes');
+                    if(time_difference >= 30) {
+                        this.get('trails').push(current_trail.map((p) => { return {lat: p.latitude, lng: p.longitude} }));
+                        current_trail = [packet];
+                    } else {
+                        current_trail.push(packet);
+                    }
+                }
+            }
+            this.get('trails').push(current_trail.map((p) => { return {lat: p.latitude, lng: p.longitude} }));
         }
     }),
-    trail: [],
+    trails: [],
 
     // Zone and tracker related
     get_bounding_box_coords(obj, spec_property, spec_property_map) {
@@ -134,6 +163,9 @@ export default Ember.Component.extend({
     last_refresh_at: 0,
     update_position_override: false,
     auto_packet_update: 5000,
+
+    // Sidebar visible
+    sidebar_visible: true,
 
     update_positions() {
         let self = this;
@@ -277,7 +309,7 @@ export default Ember.Component.extend({
                 this.get('packetService').get_last_seen(callsign).then(function(data) {
                     self.set('last_seen', data);
                     if(data.status == 'ok') {
-                        self.get('map').flyTo(new L.LatLng(data.lat, data.lng), 8);
+                        self.get('map').flyTo(new L.LatLng(data.lat, data.lng), 14);
                     }
                 });
             }
@@ -307,6 +339,10 @@ export default Ember.Component.extend({
 
         toggle_show_trackers() {
             this.toggleProperty('show_trackers');
+        },
+
+        toggle_sidebar() {
+            this.toggleProperty('sidebar_visible');
         },
 
         initMap(e) {
